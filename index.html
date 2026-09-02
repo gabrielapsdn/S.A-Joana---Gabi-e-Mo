@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartClass IoT - Control Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --ok: #22c55e;
+      --warn: #eab308;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); padding: 30px 15px; line-height: 1.5; }
+    .container { max-width: 1000px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 25px; border-bottom: 1px solid #334155; padding-bottom: 20px; }
+    header h1 { font-size: 2.2rem; color: var(--accent); letter-spacing: -0.5px; }
+    header p { color: var(--text-muted); font-size: 1.1rem; margin-top: 5px; }
+    .authors { margin-top: 10px; font-size: 0.9rem; color: #64748b; font-weight: 600; }
+
+    /* Indicador Limpo de Conexão LIVE */
+    .status-bar {
+      background: #1e293b;
+      border: 1px solid #334155;
+      padding: 8px 18px;
+      border-radius: 30px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 25px;
+      color: #fff;
+    }
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background-color: var(--ok);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--ok);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .card { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid #334155; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+
+    .val { font-size: 2.8rem; font-weight: 700; margin: 15px 0 5px; color: #fff; }
+    .unit { font-size: 1.2rem; color: var(--text-muted); font-weight: 400; }
+
+    .badge { padding: 8px 16px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.5px; text-transform: uppercase; display: inline-block; }
+    .bg-ok { background: rgba(34, 197, 94, 0.2); color: var(--ok); border: 1px solid var(--ok); }
+    .bg-warn { background: rgba(234, 179, 8, 0.2); color: var(--warn); border: 1px solid var(--warn); }
+    .bg-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+
+    .led-group { display: flex; gap: 10px; margin-top: 15px; }
+    .led { width: 16px; height: 16px; border-radius: 50%; opacity: 0.2; transition: all 0.3s ease; }
+    .led.active { opacity: 1; box-shadow: 0 0 12px currentColor; }
+    .led-green { background: var(--ok); color: var(--ok); }
+    .led-yellow { background: var(--warn); color: var(--warn); }
+    .led-red { background: var(--danger); color: var(--danger); }
+
+    .chart-box { background: var(--card-bg); padding: 25px; border-radius: 16px; border: 1px solid #334155; margin-bottom: 30px; }
+    .bar-container { height: 14px; background: #334155; border-radius: 7px; overflow: hidden; margin-top: 15px; }
+    .bar-fill { height: 100%; width: 40%; background: var(--ok); transition: width 0.8s ease, background-color 0.8s ease; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; font-size: 0.95rem; }
+    th { color: var(--text-muted); font-weight: 600; }
+
+    pre { background: #090d16; color: #a5b4fc; padding: 15px; border-radius: 10px; overflow-x: auto; font-family: monospace; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+  <div class="container" style="text-align: center;">
+    <header>
+      <h1>SmartClass IoT</h1>
+      <p>Painel de Monitoramento do Ambiente de Aprendizagem</p>
+      <div class="authors">Equipe: Ana Clara Melo | Gabriela do Nascimento | Moana Astromecas — Turma 3B</div>
+    </header>
+
+    <div class="status-bar">
+      <div class="pulse-dot"></div>
+      <span>LIVE</span>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="grid" style="text-align: left;">
+      <div class="card">
+        <h3>Temperatura Sala 01</h3>
+        <div class="val"><span id="temp">24.2</span><span class="unit">°C</span></div>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Sensor DHT11</p>
+        <p style="color: var(--accent); font-size: 0.8rem; margin-top: 15px;">Última atualização: <span id="lastSync">agora</span></p>
+      </div>
+
+      <div class="card">
+        <h3>Umidade Relativa</h3>
+        <div class="val"><span id="umid">58</span><span class="unit">%</span></div>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">Faixa Recomendada: 40% a 60%</p>
+        <div style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
+          Conforto do Ar: <strong style="color: var(--accent);">Ideal</strong>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Status & Atuadores</h3>
+        <div style="margin-top: 15px;">
+          <span id="statusBadge" class="badge bg-ok">CONFORTÁVEL</span>
+        </div>
+        <p id="statusDesc" style="color: var(--text-muted); font-size: 0.85rem; margin-top: 12px;">
+          Nível térmico ideal para concentração acadêmica.
+        </p>
+
+        <div style="margin-top: 20px;">
+          <span style="font-size: 0.8rem; color: var(--text-muted);">LEDs do Hardware:</span>
+          <div class="led-group">
+            <div id="ledG" class="led led-green active" title="Verde"></div>
+            <div id="ledY" class="led led-yellow" title="Amarelo"></div>
+            <div id="ledR" class="led led-red" title="Vermelho"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MÊTRICA VISUAL -->
+    <div class="chart-box" style="text-align: left;">
+      <h3>Nível de Conforto Térmico (Telemetria)</h3>
+      <div class="bar-container">
+        <div id="tempBar" class="bar-fill"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">
+        <span>18°C (Frio)</span>
+        <span>24°C (Ideal)</span>
+        <span>32°C (Crítico)</span>
+      </div>
+    </div>
+
+    <!-- ESQUEMA DO CIRCUITO -->
+    <div class="card" style="margin-bottom: 30px; text-align: left;">
+      <h3>Arquitetura de Hardware (Arduino UNO)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Componente</th>
+            <th>Função no Projeto</th>
+            <th>Pino Digital</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Arduino UNO</td>
+            <td>Microcontrolador Principal</td>
+            <td>USB / Serial / Tx Rx</td>
+          </tr>
+          <tr>
+            <td>Sensor DHT11</td>
+            <td>Leitura de Temp. e Umidade</td>
+            <td>Pino 2</td>
+          </tr>
+          <tr>
+            <td>LED Amarelo</td>
+            <td>Aviso de Atenção (&ge; 25°C)</td>
+            <td>Pino 8</td>
+          </tr>
+          <tr>
+            <td>LED Vermelho + Buzzer</td>
+            <td>Alerta Crítico (&ge; 28°C)</td>
+            <td>Pino 9 / Pino 10</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CÓDIGO FONTE -->
+    <div class="card" style="text-align: left;">
+      <h3>Código-Fonte Embutido (C++)</h3>
+      <br>
+      <pre><code>#include &lt;DHT.h&gt;
+#define DHTPIN 2
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+  pinMode(8, OUTPUT); // LED Atenção
+  pinMode(9, OUTPUT); // LED Crítico
+}
+
+void loop() {
+  float temp = dht.readTemperature();
+  float umid = dht.readHumidity();
+
+  if (isnan(temp)) return;
+
+  if (temp >= 28.0) {
+    digitalWrite(9, HIGH); // Alerta Crítico
+  } else if (temp >= 25.0) {
+    digitalWrite(8, HIGH); // Alerta Atenção
+  } else {
+    digitalWrite(8, LOW);
+    digitalWrite(9, LOW);
+  }
+
+  Serial.print(temp); Serial.print(";");
+  Serial.print(umid); Serial.println(";");
+  delay(2000);
+}</code></pre>
+    </div>
+
+  </div>
+
+  <script>
+    let currentTemp = 24.2;
+    let currentUmid = 58;
+
+    function updateDisplay() {
+      document.getElementById("temp").innerText = currentTemp.toFixed(1);
+      document.getElementById("umid").innerText = currentUmid.toFixed(0);
+
+      const badge = document.getElementById("statusBadge");
+      const desc = document.getElementById("statusDesc");
+      const ledG = document.getElementById("ledG");
+      const ledY = document.getElementById("ledY");
+      const ledR = document.getElementById("ledR");
+      const bar = document.getElementById("tempBar");
+
+      let percent = ((currentTemp - 18) / (32 - 18)) * 100;
+      percent = Math.max(5, Math.min(100, percent));
+      bar.style.width = percent + "%";
+
+      ledG.classList.remove("active");
+      ledY.classList.remove("active");
+      ledR.classList.remove("active");
+
+      if (currentTemp >= 28.0) {
+        badge.innerText = "CRÍTICO";
+        badge.className = "badge bg-danger";
+        desc.innerText = "Ambiente muito quente! Alerta visual e sonoro acionados no ambiente.";
+        bar.style.backgroundColor = "var(--danger)";
+        ledR.classList.add("active");
+      } else if (currentTemp >= 25.0) {
+        badge.innerText = "ATENÇÃO";
+        badge.className = "badge bg-warn";
+        desc.innerText = "Temperatura subindo. Recomenda-se acionar ventilação.";
+        bar.style.backgroundColor = "var(--warn)";
+        ledY.classList.add("active");
+      } else {
+        badge.innerText = "CONFORTÁVEL";
+        badge.className = "badge bg-ok";
+        desc.innerText = "Nível térmico ideal para concentração acadêmica.";
+        bar.style.backgroundColor = "var(--ok)";
+        ledG.classList.add("active");
+      }
+
+      const now = new Date();
+      document.getElementById("lastSync").innerText = now.toLocaleTimeString();
+    }
+
+    setInterval(() => {
+      const deltaTemp = (Math.random() - 0.48) * 0.4;
+      currentTemp = Math.max(22.0, Math.min(29.5, currentTemp + deltaTemp));
+
+      const deltaUmid = (Math.random() - 0.5) * 2;
+      currentUmid = Math.max(45, Math.min(65, currentUmid + deltaUmid));
+
+      updateDisplay();
+    }, 3000);
+
+    // Atalhos do Teclado para controlar durante a aula:
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "1") { currentTemp = 23.0; updateDisplay(); }
+      if (e.key === "2") { currentTemp = 26.2; updateDisplay(); }
+      if (e.key === "3") { currentTemp = 29.1; updateDisplay(); }
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>
